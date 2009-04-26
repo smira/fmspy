@@ -6,6 +6,11 @@
 RTMP packet headers.
 """
 
+class NeedBytes(Exception):
+    """
+    Reading from packet requires some more bytes.
+    """
+
 class RTMPHeader(object):
     """
     RTMP Header holder class.
@@ -60,7 +65,7 @@ class RTMPHeader(object):
     @type stream_id: C{int}
     """
 
-    def __init__(self, object_id, timestamp, length, type, stream_id):
+    def __init__(self, object_id=None, timestamp=None, length=None, type=None, stream_id=None):
         """
         Construct header.
 
@@ -82,14 +87,78 @@ class RTMPHeader(object):
         self.stream_id = stream_id
 
     def __repr__(self):
-        return "<RTMPHeader(object_id=%d, timestamp=%d, length=%d, type=0x%02x, stream_id=%d>" % (self.object_id,
-                self.timestamp, self.length, self.type, self.stream_id)
+        return "<RTMPHeader(object_id=%r, timestamp=%r, length=%r, type=0x%02x, stream_id=%r>" % (self.object_id,
+                self.timestamp, self.length, self.type or 0, self.stream_id)
 
     def __eq__(self, other):
         if not isinstance(other, RTMPHeader):
-            raise NotImplemented
+            return NotImplemented
 
         return (self.object_id == other.object_id and self.timestamp == other.timestamp and
             self.length == other.length and self.type == other.type and
             self.stream_id == other.stream_id)
 
+    def fill(self, other):
+        """
+        Refill incomplete header with other header's data.
+
+        This header (self) can be incomplete right-to-left, for example,
+        if it was read from shortened format.
+
+        @param other: source header (where we take values)
+        @type other: L{RTMPHeader}
+        """
+        if self.stream_id is None:
+            self.stream_id = other.stream_id
+
+            if self.type is None:
+                self.type = other.type
+
+                if self.length is None:
+                    self.length = other.length
+
+                    if self.timestamp is None:
+                        self.timestamp = other.timestamp
+
+        assert self.stream_id is not None
+        assert self.type is not None
+        assert self.length is not None
+        assert self.timestamp is not None
+        assert self.object_id is not None
+
+    @classmethod
+    def read(cls, buf):
+        """
+        Read (parse, decode) header from bytestream.
+
+        @param buf: buffer holding data for packet
+        @type buf: C{BufferedByteStream}
+        @raises NeedBytes: if we don't have enough bytes in buf
+        """
+        has_bytes = buf.remaining()
+        if has_bytes < 1:
+            raise NeedBytes, 1
+
+        first = buf.read_uchar()
+
+        size = (((first & 0xc0) >> 6) ^ 0x3) << 2
+        if size == 0:
+            size = 1
+
+        if has_bytes < size:
+            raise NeedBytes, size-has_bytes
+
+        object_id = first & 0x3f
+        timestamp = length = type = stream_id = None
+
+        if size != 1:
+            timestamp = buf.read_24bit_uint()
+
+        if size >= 8:
+            length = buf.read_24bit_uint()
+            type = buf.read_uchar()
+
+        if size == 12:
+            stream_id = buf.read_ulong()
+
+        return RTMPHeader(object_id, timestamp, length, type, stream_id)
