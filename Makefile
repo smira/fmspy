@@ -16,4 +16,8 @@ docs:
 	mkdir -p docs/api/
 	epydoc --output=docs/api/ -v --html --graph=all fmspy
 
+# Source-code tags
+tags:
+	ctags -R --exclude=docs
+
 .PHONY: docs unittest
