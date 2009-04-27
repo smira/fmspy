@@ -1,5 +1,6 @@
 *.swp
 *.pyc
+*~
 _trial_temp/
 docs/
 tags
