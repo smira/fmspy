@@ -20,4 +20,4 @@ docs:
 tags:
 	ctags -R --exclude=docs
 
-.PHONY: docs unittest
+.PHONY: docs unittest tags
