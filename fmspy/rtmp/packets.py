@@ -26,7 +26,7 @@ class Packet(object):
         self.header = header
 
     def __repr__(self):
-        return "<%s header=%r>" % (self.__class__.__name__, self.header)
+        return "<%s(header=%r)>" % (self.__class__.__name__, self.header)
 
     def __eq__(self, other):
         return NotImplemented
@@ -53,7 +53,7 @@ class DataPacket(Packet):
         self.header.length = len(data)
 
     def __repr__(self):
-        return "<%s header=%r data=%r>" % (self.__class__.__name__, self.header, self.data)
+        return "<%s(header=%r, data=%r)>" % (self.__class__.__name__, self.header, self.data)
 
     def __eq__(self, other):
         if not isinstance(other, DataPacket):

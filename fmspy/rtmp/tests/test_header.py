@@ -56,7 +56,7 @@ class RTMPHeaderTestCase(unittest.TestCase):
         self.failIfEqual(self.h1, self.h2)
 
     def test_repr(self):
-        self.failUnlessEqual("<RTMPHeader(object_id=3, timestamp=1, length=261, type=0x14, stream_id=0>", repr(self.h1))
+        self.failUnlessEqual("<RTMPHeader(object_id=3, timestamp=1, length=261, type=0x14, stream_id=0)>", repr(self.h1))
 
     def test_read(self):
         for fixture in self.data:

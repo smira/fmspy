@@ -26,5 +26,5 @@ class DataPacketTestCase(unittest.TestCase):
         self.failIfEqual(self.p1, self.p2)
 
     def test_repr(self):
-        self.failUnlessEqual("<DataPacket header=<RTMPHeader(object_id=3, timestamp=1, length=4, type=0x14, stream_id=0> data='aaaa'>", repr(self.p1))
+        self.failUnlessEqual("<DataPacket(header=<RTMPHeader(object_id=3, timestamp=1, length=4, type=0x14, stream_id=0)>, data='aaaa')>", repr(self.p1))
 

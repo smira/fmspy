@@ -89,7 +89,7 @@ class RTMPHeader(object):
         self.stream_id = stream_id
 
     def __repr__(self):
-        return "<RTMPHeader(object_id=%r, timestamp=%r, length=%r, type=0x%02x, stream_id=%r>" % (self.object_id,
+        return "<RTMPHeader(object_id=%r, timestamp=%r, length=%r, type=0x%02x, stream_id=%r)>" % (self.object_id,
                 self.timestamp, self.length, self.type or 0, self.stream_id)
 
     def __eq__(self, other):
