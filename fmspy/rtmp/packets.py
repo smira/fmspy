@@ -31,6 +31,27 @@ class Packet(object):
     def __eq__(self, other):
         return NotImplemented
 
+    @classmethod
+    def read(self, header, buf):
+        """
+        Read (decode) packet from stream.
+
+        @param header: packet header
+        @type header: L{RTMPHeader}
+        @param buf: buffer holding packet data
+        @type buf: C{BufferedByteStream}
+        """
+        raise NotImplementedError
+
+    def write(self):
+        """
+        Encode packet into bytes.
+
+        @return: representation of packet
+        @rtype: C{str}
+        """
+        raise NotImplementedError
+
 class DataPacket(Packet):
     """
     Abstract RTMP packet, holding data.
@@ -60,6 +81,27 @@ class DataPacket(Packet):
             return NotImplemented
 
         return self.data == other.data and self.header == other.header
+
+    @classmethod
+    def read(self, header, buf):
+        """
+        Read (decode) packet from stream.
+
+        @param header: packet header
+        @type header: L{RTMPHeader}
+        @param buf: buffer holding packet data
+        @type buf: C{BufferedByteStream}
+        """
+        return DataPacket(header=header, data=buf.read())
+
+    def write(self):
+        """
+        Encode packet into bytes.
+
+        @return: representation of packet
+        @rtype: C{str}
+        """
+        return self.data
 
 class Invoke(Packet):
     """
