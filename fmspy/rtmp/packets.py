@@ -65,11 +65,11 @@ class Invoke(Packet):
     """
     Invoke RTMP Packet (RPC).
 
-    @param name: procedure name
+    @ivar name: procedure name
     @type name: C{str}
-    @param id: request ID
+    @ivar id: request ID
     @type id: C{float}
-    @param argv: call arguments
+    @ivar argv: call arguments
     @type argv: C{list}
     """
 
