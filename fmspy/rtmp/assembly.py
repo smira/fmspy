@@ -131,3 +131,53 @@ class RTMPDisassembler(object):
         @rtype: L{Packet}
         """
         raise NotImplementedError
+
+class RTMPAssembler(object):
+    """
+    Transform stream of RTMP packets into stream of RTMP chunks.
+
+    We "compress" RTMP headers, saving previous sent headers for each object_id.
+    Packet data is sliced into chunks of L{chunkSize}.
+
+    @ivar chunkSize: size of chunk
+    @type chunkSize: C{int}
+    @ivar transport: transport used to transmit bytes
+    @type transport: C{twisted.internet.interfaces.ITransport}
+    @ivar lastHeaders: last sent header for object_id
+    @type lastHeaders: C{dict}, object_id -> L{RTMPHeader}
+    """
+
+    def __init__(self, chunkSize, transport):
+        """
+        Constructor.
+
+        @param chunkSize: size of chunk
+        @type chunkSize: C{int}
+        @param transport: transport used to transmit bytes
+        @type transport: C{twisted.internet.interfaces.ITransport}
+        """
+        self.chunkSize = chunkSize
+        self.transport = transport
+        self.lastHeaders = {}
+
+    def push_packet(self, packet):
+        """
+        Push RTMP packet into stream.
+
+        @param packet: RTMP packet
+        @type packet: L{Packet}
+        """
+        previous = self.lastHeaders.get(packet.header.object_id, None)
+
+        self.transport.write(packet.header.write(previous=previous))
+        
+        data = packet.write()
+        firstChunk = min(self.chunkSize, packet.header.length)
+        
+        self.transport.write(data[:firstChunk])
+
+        for pos in xrange(firstChunk, packet.header.length, self.chunkSize):
+            self.transport.write(packet.header.write(previous=packet.header))
+            self.transport.write(data[pos:pos+self.chunkSize])
+
+        self.lastHeaders[packet.header.object_id] = packet.header
