@@ -7,6 +7,7 @@ Tests for L{fmspy.rtmp.header}.
 """
 
 import unittest
+import copy
 
 from pyamf.util import BufferedByteStream
 
@@ -21,22 +22,27 @@ class RTMPHeaderTestCase(unittest.TestCase):
         ( 
              "\x03\x00\x00\x01\x00\x01\x05\x14\x00\x00\x00\x00", 
              RTMPHeader(3, 1, 261, 0x14, 0),
+             None
         ),
         ( 
              "\x02\x00\x00\x01\x00\x01\x05\x14\x00\x00\x00\x00", 
-             RTMPHeader(2, 1, 261, 0x14, 0) ,
+             RTMPHeader(2, 1, 261, 0x14, 0),
+             None
         ),
         (
              "\xc3",
              RTMPHeader(3, None, None, None, None),
+             RTMPHeader(3, 1, 261, 0x14, 0),
         ),            
         (
              "\x83\x00\x00\x01",
              RTMPHeader(3, 1, None, None, None),
+             RTMPHeader(3, 2, 261, 0x14, 0),
         ),
         (
              "\x43\x00\x00\x01\x00\x01\x05\x14",
              RTMPHeader(3, 1, 261, 0x14, None),
+             RTMPHeader(3, 1, 261, 0x15, 0),
         )            
     ]    
 
@@ -93,3 +99,21 @@ class RTMPHeaderTestCase(unittest.TestCase):
         h = RTMPHeader(1, 2, 3, 4, None)
         f = RTMPHeader(6, 7, 8, 9, None)
         self.failUnlessRaises(AssertionError, h.fill, f)
+
+    def test_diff(self):
+        self.failUnlessEqual(0, self.h1.diff(self.h1))
+        self.failUnlessEqual(0, self.h1.diff(self.h3))
+        self.failUnlessRaises(AssertionError, self.h1.diff, self.h2)
+
+        self.failUnlessEqual(1, self.h1.diff(RTMPHeader(3, 444, 261, 0x14, 0)))
+        self.failUnlessEqual(2, self.h1.diff(RTMPHeader(3, 1, 262, 0x14, 0)))
+        self.failUnlessEqual(2, self.h1.diff(RTMPHeader(3, 1, 261, 0x15, 0)))
+        self.failUnlessEqual(3, self.h1.diff(RTMPHeader(3, 1, 261, 0x14, 11)))
+
+    def test_write(self):
+        for fixture in self.data:
+            h = copy.copy(fixture[1])
+            h.fill(self.h1)
+
+            self.failUnlessEqual(fixture[0], h.write(previous=fixture[2]))
+

@@ -6,6 +6,8 @@
 RTMP packet headers.
 """
 
+from pyamf.util import BufferedByteStream
+
 class NeedBytes(Exception):
     """
     Reading from packet requires some more bytes.
@@ -126,6 +128,33 @@ class RTMPHeader(object):
         assert self.timestamp is not None
         assert self.object_id is not None
 
+    def diff(self, other):
+        """
+        Find difference between this header and other header (how many fields differ).
+
+        @param other: other header
+        @type other: L{RTMPHeader}
+        @return: difference
+        @rtype: C{int}
+        """
+        if self is other or self == other:
+            # headers are equal, we need 1 byte
+            return 0
+
+        # difference should be computed for packets with same object_id
+        assert self.object_id == other.object_id
+
+        if self.stream_id == other.stream_id:
+            if self.type == other.type and self.length == other.length:
+                # difference only in timestamp, 4 bytes
+                return 1
+
+            # stream_id matches, we need 8 bytes
+            return 2
+        
+        # we need full header encoded, 12 bytes
+        return 3
+
     @classmethod
     def read(cls, buf):
         """
@@ -162,3 +191,38 @@ class RTMPHeader(object):
             stream_id = buf.read_ulong()
 
         return RTMPHeader(object_id, timestamp, length, type, stream_id)
+
+    def write(self, previous=None):
+        """
+        Write (encoder) header to byte string.
+
+        @param previous: previous header (used to compress header)
+        @type previous: L{RTMPHeader}
+        @return: encoded header
+        @rtype: C{str}
+        """
+        if previous is None:
+            diff = 3
+        else:
+            diff = self.diff(previous)
+
+        first = self.object_id & 0x3f | ((diff ^ 3) << 6)
+
+        if diff == 0:
+            return chr(first)
+
+        buf = BufferedByteStream()
+        buf.write_uchar(first)
+
+        buf.write_24bit_uint(self.timestamp)
+
+        if diff > 1:
+            buf.write_24bit_uint(self.length)
+            buf.write_uchar(self.type)
+
+            if diff > 2:
+                buf.write_ulong(self.stream_id)
+
+        buf.seek(0, 0)
+        return buf.read()
+
