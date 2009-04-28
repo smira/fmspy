@@ -48,38 +48,35 @@ class RTMPDisassembler(object):
 
     def push_data(self, data):
         """
-        Push more incoming data, decode packets received so far.
+        Push more incoming data.
 
         @param data: data received
         @type data: C{str}
-        @return: decoded packets, list of L{Packet}
-        @rtype: C{list}
         """
-
         self.buffer.seek(0, 2)
         self.buffer.write(data)
 
-        return self._disassemble()
+        return self
 
-    def _disassemble(self):
+    def disassemble(self):
         """
         Disassemble L{buffer} into packets.
 
-        @return: decoded packets, list of L{Packet}
-        @rtype: C{list}
+        Returns first decoded packet or None, if no packet could
+        be decoded at the moment.
+
+        @return: decoded packet
+        @rtype: L{Packet}
         """
-        result = []
-
         self.buffer.seek(0)
-
-        # while we have some data to analyze
+        
         while self.buffer.remaining() > 0:
             try:
                 # try to parse header from stream
                 header = RTMPHeader.read(self.buffer)
             except NeedBytes, (bytes, ):
                 # not enough bytes, return what we've already parsed
-                return result
+                return None
 
             # fill header with extra data from previous headers received
             # with same object_id
@@ -93,8 +90,8 @@ class RTMPDisassembler(object):
             thisChunk = min(header.length - len(buf), self.chunkSize)
             if self.buffer.remaining() < thisChunk:
                 # we have not enough bytes to read this chunk of data
-                return result
-   
+                return None
+
             # we got complete chunk
             buf.write(self.buffer.read(thisChunk))
 
@@ -111,11 +108,32 @@ class RTMPDisassembler(object):
             else:
                 # parse packet from header and data
                 buf.seek(0, 0)
-                result.append(self._decode_packet(header, buf))
-
+                
                 # delete stored data for this packet
                 if header.object_id in self.pool:
                     del self.pool[header.object_id]
+
+                return self._decode_packet(header, buf)
+
+        return None
+
+    def disassemble_packets(self):
+        """
+        Disassemble L{buffer} into packets, return all packets decoded so far.
+
+        B{Warning}! This method is dangerous, if chunk size is changed while processing
+        packets, it may decode stream incorrectly. Use only when chunk size is 
+        constant or for debugging purposes.
+
+        @return: decoded packets, list of L{Packet}
+        @rtype: C{list}
+        """
+        result = []
+        while True:
+            packet = self.disassemble()
+            if packet is None:
+                break
+            result.append(packet)
 
         return result
 

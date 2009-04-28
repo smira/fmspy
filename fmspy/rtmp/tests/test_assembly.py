@@ -89,7 +89,7 @@ class RTMPDisassemblerTestCase(RTMPAssemblyTestCase):
     def test_disassemble(self):
         for fixture in self.data:
             d = RTMPMockDisassembler(128)
-            self.assertEqual(fixture['packets'], d.push_data(struct.pack("B" * len(fixture['data']), *fixture['data'])))
+            self.assertEqual(fixture['packets'], d.push_data(struct.pack("B" * len(fixture['data']), *fixture['data'])).disassemble_packets())
             self.failUnless(d.is_empty())
 
     def test_disassemble_chunks(self):
@@ -103,7 +103,7 @@ class RTMPDisassemblerTestCase(RTMPAssemblyTestCase):
                 data = ''.join([chr(random.randint(0, 255)) for x in xrange(l)])
 
                 self.failUnlessEqual([DataPacket(header=RTMPHeader(object_id=2, timestamp=0, length=0, type=0x04, stream_id=0), data=data)], 
-                        d.push_data(''.join(self.gen_packet(header, shortHeaders, data, l, chunkSize))))
+                        d.push_data(''.join(self.gen_packet(header, shortHeaders, data, l, chunkSize))).disassemble_packets())
                 self.failUnless(d.is_empty())
 
 
