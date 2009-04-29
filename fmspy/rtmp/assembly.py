@@ -11,6 +11,7 @@ Cutting packets into chunks for transmission.
 from pyamf.util import BufferedByteStream
 
 from fmspy.rtmp.header import RTMPHeader, NeedBytes
+from fmspy.rtmp.packets import packetFactory
 
 class RTMPDisassembler(object):
     """
@@ -148,7 +149,7 @@ class RTMPDisassembler(object):
         @return: decoded packet
         @rtype: L{Packet}
         """
-        raise NotImplementedError
+        return packetFactory(header, buf)
 
 class RTMPAssembler(object):
     """
@@ -187,9 +188,10 @@ class RTMPAssembler(object):
         """
         previous = self.lastHeaders.get(packet.header.object_id, None)
 
+        # calling write() on packet may fill header.length
+        data = packet.write()
         self.transport.write(packet.header.write(previous=previous))
         
-        data = packet.write()
         firstChunk = min(self.chunkSize, packet.header.length)
         
         self.transport.write(data[:firstChunk])
