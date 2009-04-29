@@ -8,8 +8,11 @@ Tests for L{fmspy.rtmp.packets}.
 
 import unittest
 
+import pyamf
+from pyamf.util import BufferedByteStream
+
 from fmspy.rtmp.header import RTMPHeader
-from fmspy.rtmp.packets import Packet, DataPacket
+from fmspy.rtmp.packets import Packet, DataPacket, Invoke
 
 class DataPacketTestCase(unittest.TestCase):
     """
@@ -28,3 +31,45 @@ class DataPacketTestCase(unittest.TestCase):
     def test_repr(self):
         self.failUnlessEqual("<DataPacket(header=<RTMPHeader(object_id=3, timestamp=1, length=4, type=0x14, stream_id=0)>, data='aaaa')>", repr(self.p1))
 
+class InvokeTestCase(unittest.TestCase):
+    """
+    Test case for L{fmspy.rtmp.packets.Invoke}.
+    """
+
+    data = [
+            (
+                { 'header' : RTMPHeader(object_id=3, timestamp=0, length=235, type=0x14, stream_id=0L),
+                  'buf'    : BufferedByteStream('\x02\x00\x07connect\x00?\xf0\x00\x00\x00\x00\x00\x00\x03\x00\x03app\x02\x00\x04echo\x00\x08flashVer\x02\x00\rLNX 10,0,20,7\x00\x06swfUrl\x06\x00\x05tcUrl\x02\x00\x15rtmp://localhost/echo\x00\x04fpad\x01\x00\x00\x0ccapabilities\x00@.\x00\x00\x00\x00\x00\x00\x00\x0baudioCodecs\x00@\xa8\xee\x00\x00\x00\x00\x00\x00\x0bvideoCodecs\x00@o\x80\x00\x00\x00\x00\x00\x00\rvideoFunction\x00?\xf0\x00\x00\x00\x00\x00\x00\x00\x07pageUrl\x06\x00\x0eobjectEncoding\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\t'),
+                },
+                Invoke(name=u'connect', argv=({'videoCodecs': 252, 'audioCodecs': 3191, 'flashVer': u'LNX 10,0,20,7', 'app': u'echo', 
+                            'tcUrl': u'rtmp://localhost/echo', 'videoFunction': 1, 'capabilities': 15, 'pageUrl': pyamf.Undefined, 'fpad': False, 
+                            'swfUrl': pyamf.Undefined, 'objectEncoding': 0},), id=1, header=RTMPHeader(object_id=3, timestamp=0, length=235, type=0x14, stream_id=0L)),
+                False
+            ),
+            (
+                { 'header' : RTMPHeader(object_id=3, timestamp=0, length=0, type=0x14, stream_id=0L),
+                  'buf'    : BufferedByteStream('\x02\x00\x07destroy\x00@@\x80\x00\x00\x00\x00\x00\x03\x00\x0bvideoCodecs\x00@o\x80\x00\x00\x00\x00\x00\x00\x00\t'),
+                },
+                Invoke(name=u'destroy', argv=({'videoCodecs': 252},), id=33, header=RTMPHeader(object_id=3, timestamp=0, length=0, type=0x14, stream_id=0L)),
+                True
+            ),
+           ]
+
+    def test_eq(self):
+        self.failUnlessEqual(Invoke(name='a', argv=(), id=35.0, header=RTMPHeader(object_id=3)), Invoke(name='a', argv=(), id=35.0, header=RTMPHeader(object_id=3)))
+        self.failIfEqual(Invoke(name='a', argv=(), id=35.0, header=RTMPHeader(object_id=3)), Invoke(name='b', argv=(), id=35.0, header=RTMPHeader(object_id=3)))
+        self.failIfEqual(Invoke(name='a', argv=(), id=35.0, header=RTMPHeader(object_id=3)), Invoke(name='a', argv=('a'), id=35.0, header=RTMPHeader(object_id=3)))
+        self.failIfEqual(Invoke(name='a', argv=(), id=35.0, header=RTMPHeader(object_id=3)), Invoke(name='a', argv=(), id=36.0, header=RTMPHeader(object_id=3)))
+        self.failIfEqual(Invoke(name='a', argv=(), id=35.0, header=RTMPHeader(object_id=3)), Invoke(name='a', argv=(), id=35.0, header=RTMPHeader(object_id=4)))
+
+    def test_read(self):
+        for fixture in self.data:
+            fixture[0]['buf'].seek(0)
+            self.failUnlessEqual(fixture[1], Invoke.read(**fixture[0]))
+
+    def test_write(self):
+        for fixture in self.data:
+            if not fixture[2]:
+                continue
+            fixture[0]['buf'].seek(0)
+            self.failUnlessEqual(fixture[0]['buf'].read(), fixture[1].write())
