@@ -28,6 +28,7 @@ STREAM_METADATA =           0x12
 SO =                        0x13
 INVOKE =                    0x14
 
+DEFAULT_BYTES_READ_OBJECT_ID =  0x02
 DEFAULT_INVOKE_OBJECT_ID =  0x03
 #
 ACTION_CONNECT =            "connect"

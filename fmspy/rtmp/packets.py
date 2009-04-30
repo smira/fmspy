@@ -7,6 +7,7 @@ Different RTMP packets.
 """
 
 import pyamf
+from pyamf.util import BufferedByteStream
 
 from fmspy.rtmp.header import RTMPHeader
 from fmspy.rtmp import constants
@@ -124,6 +125,15 @@ class Invoke(Packet):
     def __init__(self, name, argv, id, header):
         """
         Construct Invoke packet.
+
+        @param name: procedure name
+        @type name: C{str}
+        @param argv: call arguments
+        @type argv: C{list}
+        @param id: request ID
+        @type id: C{float}
+        @param header: packet header
+        @type header: L{RTMPHeader}
         """
         if header.type is None:
             header.type = constants.INVOKE
@@ -170,6 +180,68 @@ class Invoke(Packet):
         """
         buf = pyamf.encode(self.name, self.id, *self.argv)
         self.header.length = len(buf)
+        return buf.read()
+
+class BytesRead(Packet):
+    """
+    Bytes read packet. 
+
+    This packet is used (?) to control stream liveness.
+
+    @ivar bytes: number of bytes received so far
+    @type bytes: C{int}
+    """
+
+    def __init__(self, bytes, header):
+        """
+        Construct BytesRead packet.
+
+        @param bytes: number of bytes received so far
+        @type bytes: C{int}
+        @param header: packet header
+        @type header: L{RTMPHeader}
+        """
+        if header.type is None:
+            header.type = constants.BYTES_READ
+        if header.object_id is None:
+            header.object_id = constants.DEFAULT_BYTES_READ_OBJECT_ID
+
+        super(BytesRead, self).__init__(header)
+
+        self.bytes = bytes
+
+    def __repr__(self):
+        return "<%s(bytes=%r, header=%r)>" % (self.__class__.__name__, self.bytes, self.header)
+
+    def __eq__(self, other):
+        if not isinstance(other, BytesRead):
+            return NotImplemented
+
+        return self.bytes == other.bytes and self.header == other.header
+
+    @classmethod
+    def read(self, header, buf):
+        """
+        Read (decode) packet from stream.
+
+        @param header: packet header
+        @type header: L{RTMPHeader}
+        @param buf: buffer holding packet data
+        @type buf: C{BufferedByteStream}
+        """
+        return BytesRead(buf.read_ulong(), header)
+
+    def write(self):
+        """
+        Encode packet into bytes.
+
+        @return: representation of packet
+        @rtype: C{str}
+        """
+        buf = BufferedByteStream()
+        self.header.length = len(buf)
+        buf.write_ulong(self.bytes)
+        buf.seek(0, 0)
         return buf.read()
 
 def packetFactory(header, buf):

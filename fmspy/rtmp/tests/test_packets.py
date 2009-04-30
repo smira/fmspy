@@ -12,7 +12,7 @@ import pyamf
 from pyamf.util import BufferedByteStream
 
 from fmspy.rtmp.header import RTMPHeader
-from fmspy.rtmp.packets import Packet, DataPacket, Invoke
+from fmspy.rtmp.packets import Packet, DataPacket, Invoke, BytesRead
 
 class DataPacketTestCase(unittest.TestCase):
     """
@@ -62,6 +62,10 @@ class InvokeTestCase(unittest.TestCase):
         self.failIfEqual(Invoke(name='a', argv=(), id=35.0, header=RTMPHeader(object_id=3)), Invoke(name='a', argv=(), id=36.0, header=RTMPHeader(object_id=3)))
         self.failIfEqual(Invoke(name='a', argv=(), id=35.0, header=RTMPHeader(object_id=3)), Invoke(name='a', argv=(), id=35.0, header=RTMPHeader(object_id=4)))
 
+    def test_repr(self):
+        self.failUnlessEqual("<Invoke(name=u'destroy', argv=({'videoCodecs': 252},), id=33, header=<RTMPHeader(object_id=3, timestamp=0, length=0, type=0x14, stream_id=0L)>)>", 
+                repr(Invoke(name=u'destroy', argv=({'videoCodecs': 252},), id=33, header=RTMPHeader(object_id=3, timestamp=0, length=0, type=0x14, stream_id=0L))))
+
     def test_read(self):
         for fixture in self.data:
             fixture[0]['buf'].seek(0)
@@ -71,5 +75,35 @@ class InvokeTestCase(unittest.TestCase):
         for fixture in self.data:
             if not fixture[2]:
                 continue
+            fixture[0]['buf'].seek(0)
+            self.failUnlessEqual(fixture[0]['buf'].read(), fixture[1].write())
+
+class BytesReadTestCase(unittest.TestCase):
+    """
+    Test case for L{fmspy.rtmp.packets.BytesRead}.
+    """
+
+    data = [
+            (
+                { 'header' : RTMPHeader(object_id=2, timestamp=0, length=4, type=0x03, stream_id=0L),
+                  'buf'    : BufferedByteStream('\x00\x00\x00\x89'),
+                },
+                BytesRead(  bytes=137,
+                            header=RTMPHeader(object_id=2, timestamp=0, length=4, type=0x03, stream_id=0L)),
+            ),
+           ]
+
+    def test_eq(self):
+        self.failUnlessEqual(BytesRead(bytes=5, header=RTMPHeader(object_id=3)), BytesRead(bytes=5, header=RTMPHeader(object_id=3)))
+        self.failIfEqual(BytesRead(bytes=5, header=RTMPHeader(object_id=4)), BytesRead(bytes=5, header=RTMPHeader(object_id=3)))
+        self.failIfEqual(BytesRead(bytes=6, header=RTMPHeader(object_id=3)), BytesRead(bytes=5, header=RTMPHeader(object_id=3)))
+
+    def test_read(self):
+        for fixture in self.data:
+            fixture[0]['buf'].seek(0)
+            self.failUnlessEqual(fixture[1], BytesRead.read(**fixture[0]))
+
+    def test_write(self):
+        for fixture in self.data:
             fixture[0]['buf'].seek(0)
             self.failUnlessEqual(fixture[0]['buf'].read(), fixture[1].write())
