@@ -12,7 +12,7 @@ import pyamf
 from pyamf.util import BufferedByteStream
 
 from fmspy.rtmp.header import RTMPHeader
-from fmspy.rtmp.packets import Packet, DataPacket, Invoke, BytesRead
+from fmspy.rtmp.packets import Packet, DataPacket, Invoke, BytesRead, Ping
 
 class DataPacketTestCase(unittest.TestCase):
     """
@@ -102,6 +102,51 @@ class BytesReadTestCase(unittest.TestCase):
         for fixture in self.data:
             fixture[0]['buf'].seek(0)
             self.failUnlessEqual(fixture[1], BytesRead.read(**fixture[0]))
+
+    def test_write(self):
+        for fixture in self.data:
+            fixture[0]['buf'].seek(0)
+            self.failUnlessEqual(fixture[0]['buf'].read(), fixture[1].write())
+
+class PingTestCase(unittest.TestCase):
+    """
+    Test case for L{fmspy.rtmp.packets.Ping}.
+    """
+
+    data = [
+            (
+                { 'header' : RTMPHeader(object_id=2, timestamp=0, length=6, type=0x04, stream_id=0L),
+                  'buf'    : BufferedByteStream('\x00\x06\x00\x00\x00\x89'),
+                },
+                Ping( event=6, data=[137],
+                            header=RTMPHeader(object_id=2, timestamp=0, length=6, type=0x04, stream_id=0L)),
+            ),
+            (
+                { 'header' : RTMPHeader(object_id=2, timestamp=0, length=10, type=0x04, stream_id=0L),
+                  'buf'    : BufferedByteStream('\x00\x06\x00\x00\x00\x89\x00\x00\x00\x0e'),
+                },
+                Ping( event=6, data=[137, 14],
+                            header=RTMPHeader(object_id=2, timestamp=0, length=10, type=0x04, stream_id=0L)),
+            ),
+            (
+                { 'header' : RTMPHeader(object_id=2, timestamp=0, length=14, type=0x04, stream_id=0L),
+                  'buf'    : BufferedByteStream('\x00\x06\x00\x00\x00\x89\x00\x00\x00\x0e\x00\x00\x03y'),
+                },
+                Ping( event=6, data=[137, 14, 889],
+                            header=RTMPHeader(object_id=2, timestamp=0, length=14, type=0x04, stream_id=0L)),
+            ),
+           ]
+
+    def test_eq(self):
+        self.failUnlessEqual(Ping(event=5, data=[3], header=RTMPHeader(object_id=3)), Ping(event=5, data=[3], header=RTMPHeader(object_id=3)))
+        self.failIfEqual(Ping(event=5, data=[3], header=RTMPHeader(object_id=3)), Ping(event=5, data=[3], header=RTMPHeader(object_id=4)))
+        self.failIfEqual(Ping(event=5, data=[3], header=RTMPHeader(object_id=3)), Ping(event=5, data=[3, 4], header=RTMPHeader(object_id=3)))
+        self.failIfEqual(Ping(event=5, data=[3], header=RTMPHeader(object_id=3)), Ping(event=6, data=[3], header=RTMPHeader(object_id=3)))
+
+    def test_read(self):
+        for fixture in self.data:
+            fixture[0]['buf'].seek(0)
+            self.failUnlessEqual(fixture[1], Ping.read(**fixture[0]))
 
     def test_write(self):
         for fixture in self.data:

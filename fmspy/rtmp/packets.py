@@ -239,8 +239,105 @@ class BytesRead(Packet):
         @rtype: C{str}
         """
         buf = BufferedByteStream()
-        self.header.length = len(buf)
         buf.write_ulong(self.bytes)
+        self.header.length = len(buf)
+        buf.seek(0, 0)
+        return buf.read()
+
+class Ping(Packet):
+    """
+    Ping packet is used (?) to check as connection keep-alive.
+
+    @ivar event: ping event (1 byte)
+    @type event: C{int}
+    @ivar data: ping data, 1..3 longs (4 bytes * 1..3)
+    @type data: C{list(int)}
+    """
+    
+    STREAM_CLEAR = 0
+    """ Stream clear event """
+    STREAM_PLAYBUFFER_CLEAR = 1
+    """ Stream play """
+    UNKNOWN_2 = 2
+    """ Unknown event """
+    CLIENT_BUFFER = 3
+    """ Client buffer """
+    STREAM_RESET = 4
+    """ Stream reset """
+    UNKNOWN_5 = 5
+    """ One more unknown event """
+    PING_CLIENT = 6 
+    """ Client ping event """
+    PONG_SERVER = 7
+    """ Server response event """
+    UNKNOWN_8 = 8
+    """ One more unknown event """
+    UNDEFINED = -1
+    """ Event type is undefined """
+
+    def __init__(self, event, data, header):
+        """
+        Construct Ping packet.
+
+        @param event: ping event (1 byte)
+        @type event: C{int}
+        @param data: ping data, 1..3 longs (4 bytes * 1..3)
+        @type data: C{list(int)}
+        @param header: packet header
+        @type header: L{RTMPHeader}
+        """
+        if header.type is None:
+            header.type = constants.PING
+        if header.object_id is None:
+            header.object_id = constants.DEFAULT_PING_OBJECT_ID
+
+        super(Ping, self).__init__(header)
+
+        self.event = event
+        self.data = data
+
+    def __repr__(self):
+        return "<%s(event=%r, data=%r, header=%r)>" % (self.__class__.__name__, self.event, self.data, self.header)
+
+    def __eq__(self, other):
+        if not isinstance(other, Ping):
+            return NotImplemented
+
+        return self.event == other.event and self.data == other.data and self.header == other.header
+
+    @classmethod
+    def read(self, header, buf):
+        """
+        Read (decode) packet from stream.
+
+        @param header: packet header
+        @type header: L{RTMPHeader}
+        @param buf: buffer holding packet data
+        @type buf: C{BufferedByteStream}
+        """
+        data = [-1]
+        (event, data[0]) = (buf.read_ushort(), buf.read_ulong())
+        if buf.remaining() >= 4:
+            data.append(buf.read_ulong())
+            if buf.remaining() >= 4:
+                data.append(buf.read_ulong())
+
+        return Ping(event, data, header)
+
+    def write(self):
+        """
+        Encode packet into bytes.
+
+        @return: representation of packet
+        @rtype: C{str}
+        """
+        buf = BufferedByteStream()
+        buf.write_ushort(self.event)
+
+        for val in self.data:
+            buf.write_ulong(val)
+
+        self.header.length = len(buf)
         buf.seek(0, 0)
         return buf.read()
 
@@ -257,6 +354,8 @@ def packetFactory(header, buf):
     """
     typeMap = {
                 constants.INVOKE : Invoke,
+                constants.BYTES_READ : BytesRead,
+                constants.PING : Ping,
               }
 
     if header.type in typeMap:
