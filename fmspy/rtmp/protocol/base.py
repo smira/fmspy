@@ -6,13 +6,15 @@
 Base RTMP protocol.
 """
 
-from twisted.internet import protocol, reactor
+from twisted.internet import protocol, reactor, task
 from twisted.python import log
 from pyamf.util import BufferedByteStream
 
 from fmspy.rtmp.assembly import RTMPAssembler, RTMPDisassembler
 from fmspy.rtmp import constants
+from fmspy.rtmp.packets import Ping, BytesRead
 from fmspy.config import config
+from fmspy import _time
 
 class RTMPBaseProtocol(protocol.Protocol):
     """
@@ -90,7 +92,7 @@ class RTMPBaseProtocol(protocol.Protocol):
 
     def _handshakeComplete(self):
         """
-        Handshake completed, clear timeouts.
+        Handshake complete, clear timeouts.
         """
         if self.handshakeTimeout is not None:
             self.handshakeTimeout.cancel()
@@ -156,9 +158,125 @@ class RTMPBaseProtocol(protocol.Protocol):
         @param packet: packet
         @type packet: L{Packet}
         """
-        handler = 'handle_' + packet.__class__.__name__.lower()
+        log.msg("<- %r" % packet)
+        handler = 'handle' + packet.__class__.__name__
         try:
             getattr(self, handler)(packet)
         except AttributeError:
             log.msg("Unhandled packet: %r" % packet)
+
+    def pushPacket(self, packet):
+        """
+        Push outgoing RTMP packet.
+
+        @param packet: outgoing packet
+        @type packet: L{Packet}.
+        """
+        log.msg("-> %r" % packet)
+        self.output.push_packet(packet)
+
+class RTMPCoreProtocol(RTMPBaseProtocol):
+    """
+    RTMP Protocol: core features for all protocols.
+
+    @ivar lastReceived: last time some data was received
+    @type lastReceived: C{int}
+    @ivar bytesReceived: number of bytes received so far
+    @type bytesReceived: C{int}
+    @ivar pingTask: periodic ping task
+    @type pingTask: C{task.LoopingCall}
+    """
+
+    def __init__(self):
+        """
+        Constructor.
+        """
+        RTMPBaseProtocol.__init__(self)
+        self.bytesReceived = 0
+        self.lastReceived = _time.seconds()
+        self.pingTask = None
+
+    def dataReceived(self, data):
+        """
+        Some data was received from peer.
+
+        @param data: bytes received
+        @type data: C{str}
+        """
+        self.lastReceived = _time.seconds()
+        self.bytesReceived += len(data)
+
+        RTMPBaseProtocol.dataReceived(self, data)
+
+    def connectionLost(self, reason):
+        """
+        Connection with peer was lost for some reason.
+        """
+        RTMPBaseProtocol.connectionLost(self, reason)
+
+        if self.pingTask is not None:
+            self.pingTask.stop()
+            self.pingTask = None
+
+    def _handshakeComplete(self):
+        """
+        Handshake was complete.
+
+        Start regular pings.
+        """
+        RTMPBaseProtocol._handshakeComplete(self)
+
+        self.pingTask = task.LoopingCall(self._pinger)
+        self.pingTask.start(config.getint('RTMP', 'pingInterval'), now=False)
+
+    def handlePing(self, packet):
+        """
+        Handle incoming L{Ping} packets.
+
+        @param packet: packet
+        @type packet: L{Ping}
+        """
+        # stream buffer length, sending it to router, and sending buffer clear ping message
+        if packet.event == Ping.CLIENT_BUFFER:
+            self.pushPacket(Ping(Ping.STREAM_CLEAR, [packet.data[0]]))
+        # normal ping request
+        elif packet.event == Ping.PING_CLIENT:
+            self.pushPacket(Ping(Ping.PONG_SERVER, packet.data))
+        # normal pong
+        elif packet.event == Ping.PONG_SERVER:
+            pass # we control last received time in L{dataReceived}
+        # first ping ?
+        elif packet.event == Ping.UNKNOWN_8:
+            pass
+        else:
+            log.msg("Unknown ping: %r" % packet)
+
+    def handleBytesRead(self, packet):
+        """
+        Handle incoming L{BytesRead} packets.
+
+        @param packet: packet
+        @type packet: L{BytesRead}
+        """
+        pass # we do nothing
+
+    def _pinger(self):
+        """
+        Regular 'ping' service.
+
+        We send 'pings' to other end of RTMP protocol, expecting to receive
+        'pong'. If we receive some data, we assume 'ping' is sent. If other end
+        of protocol doesn't send anything in reply to our 'ping' for some timeout,
+        we disconnect connection.
+        """
+        noDataInterval = _time.seconds() - self.lastReceived
+
+        if noDataInterval > config.getint('RTMP', 'keepAliveTimeout'):
+            log.msg('Closing connection due too much inactivity (%d)' % noDataInterval)
+            self.transport.loseConnection()
+
+        if noDataInterval > config.getint('RTMP', 'pingInterval'):
+            self.pushPacket(Ping(Ping.PING_CLIENT, [int((_time.seconds()*1000) & 0x7fffffff), 0xffffffff, 0]))
+
+        self.pushPacket(BytesRead(self.bytesReceived))
 
