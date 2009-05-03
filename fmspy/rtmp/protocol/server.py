@@ -8,10 +8,10 @@ Server RTMP protocol.
 
 from twisted.internet import protocol
 
-from fmspy.rtmp.protocol.base import RTMPBaseProtocol
+from fmspy.rtmp.protocol.base import RTMPCoreProtocol
 from fmspy.rtmp import constants
 
-class RTMPServerProtocol(RTMPBaseProtocol):
+class RTMPServerProtocol(RTMPCoreProtocol):
     """
     RTMP server-side protocol implementation.
     """

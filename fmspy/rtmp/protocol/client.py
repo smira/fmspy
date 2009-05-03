@@ -6,10 +6,10 @@
 Client RTMP protocol.
 """
 
-from fmspy.rtmp.protocol.base import RTMPBaseProtocol
+from fmspy.rtmp.protocol.base import RTMPCoreProtocol
 from fmspy.rtmp import constants
 
-class RTMPClientProtocol(RTMPBaseProtocol):
+class RTMPClientProtocol(RTMPCoreProtocol):
     """
     RTMP client-side protocol implementation.
     """
