@@ -277,7 +277,7 @@ class RTMPCoreProtocol(RTMPBaseProtocol):
             return
 
         if noDataInterval > config.getint('RTMP', 'pingInterval'):
-            self.pushPacket(Ping(Ping.PING_CLIENT, [int((_time.seconds()*1000) & 0x7fffffff), 0xffffffff, 0]))
+            self.pushPacket(Ping(Ping.PING_CLIENT, [int((_time.seconds()*1000) & 0x7fffffff)]))
 
         self.pushPacket(BytesRead(self.bytesReceived))
 
