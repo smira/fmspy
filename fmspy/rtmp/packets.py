@@ -192,7 +192,7 @@ class BytesRead(Packet):
     @type bytes: C{int}
     """
 
-    def __init__(self, bytes, header):
+    def __init__(self, bytes, header=None):
         """
         Construct BytesRead packet.
 
@@ -201,10 +201,13 @@ class BytesRead(Packet):
         @param header: packet header
         @type header: L{RTMPHeader}
         """
-        if header.type is None:
-            header.type = constants.BYTES_READ
-        if header.object_id is None:
-            header.object_id = constants.DEFAULT_BYTES_READ_OBJECT_ID
+        if header is None:
+            header = RTMPHeader(constants.DEFAULT_BYTES_READ_OBJECT_ID, 0, 0, constants.BYTES_READ, 0)
+        else:
+            if header.type is None:
+                header.type = constants.BYTES_READ
+            if header.object_id is None:
+                header.object_id = constants.DEFAULT_BYTES_READ_OBJECT_ID
 
         super(BytesRead, self).__init__(header)
 
@@ -275,7 +278,7 @@ class Ping(Packet):
     UNDEFINED = -1
     """ Event type is undefined """
 
-    def __init__(self, event, data, header):
+    def __init__(self, event, data, header=None):
         """
         Construct Ping packet.
 
@@ -286,10 +289,13 @@ class Ping(Packet):
         @param header: packet header
         @type header: L{RTMPHeader}
         """
-        if header.type is None:
-            header.type = constants.PING
-        if header.object_id is None:
-            header.object_id = constants.DEFAULT_PING_OBJECT_ID
+        if header is None:
+            header = RTMPHeader(constants.DEFAULT_PING_OBJECT_ID, 0, 0, constants.PING, 0)
+        else:
+            if header.type is None:
+                header.type = constants.PING
+            if header.object_id is None:
+                header.object_id = constants.DEFAULT_PING_OBJECT_ID
 
         super(Ping, self).__init__(header)
 
