@@ -274,6 +274,7 @@ class RTMPCoreProtocol(RTMPBaseProtocol):
         if noDataInterval > config.getint('RTMP', 'keepAliveTimeout'):
             log.msg('Closing connection due too much inactivity (%d)' % noDataInterval)
             self.transport.loseConnection()
+            return
 
         if noDataInterval > config.getint('RTMP', 'pingInterval'):
             self.pushPacket(Ping(Ping.PING_CLIENT, [int((_time.seconds()*1000) & 0x7fffffff), 0xffffffff, 0]))
