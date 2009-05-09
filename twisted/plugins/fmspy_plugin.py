@@ -6,11 +6,13 @@
 FMSPy Twisted plugin.
 """
 
+import sys
+
 from zope.interface import implements
 
 from twisted.application.service import IServiceMaker
 from twisted.application import internet
-from twisted.python import usage
+from twisted.python import usage, log
 from twisted.plugin import IPlugin
 
 class Options(usage.Options):
@@ -30,6 +32,8 @@ class FMSPyServiceMaker(object):
         """
         Construct a TCPServer from a factory defined in myproject.
         """
+        observer = log.FileLogObserver(sys.stderr)
+        log.addObserver(observer.emit)
 
         from fmspy.config import config
         
@@ -45,6 +49,18 @@ class FMSPyServiceMaker(object):
 
         h = internet.TCPServer(config.getint('RTMP', 'port'), RTMPServerFactory(), config.getint('RTMP', 'backlog'), config.get('RTMP', 'interface'))
         h.setServiceParent(s)
+
+        from fmspy.application import app_factory
+
+        def appsLoaded(_):
+            log.msg("Applications loaded.")
+
+        def appsError(fail):
+            log.err(fail, "Applications failed to load.")
+
+        app_factory.load_applications().addCallbacks(appsLoaded, appsError)
+
+        log.removeObserver(observer.emit)
 
         return s
 
