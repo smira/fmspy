@@ -28,13 +28,15 @@ class ApplicationFactoryTestCase(unittest.TestCase):
     def test_load2(self):
         config.add_section('TestApplication')
         config.set('TestApplication', 'enabled', 'yes')
+        config.set('TestApplication', 'name', 'test')
 
         def check(_):
-            self.failUnlessEqual(['TestApplication'], self.f.apps.keys())
+            self.failUnlessEqual(['test'], self.f.apps.keys())
             self.failUnless(self.f.apps.values()[0].loaded)
 
         def cleanup(r):
             config.remove_option('TestApplication', 'enabled')
+            config.remove_option('TestApplication', 'name')
             config.remove_section('TestApplication')
 
             return r

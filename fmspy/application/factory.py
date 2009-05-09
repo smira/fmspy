@@ -56,6 +56,7 @@ class ApplicationFactory(object):
             if app.enabled():
                 log.msg("Loading %r..." % app)
                 yield app.load()
+                assert app.name() not in self.apps
                 self.apps[app.name()] = app
 
     def get_application(self, name):

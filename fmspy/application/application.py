@@ -49,9 +49,12 @@ class Application(object):
         """
         Get application name.
 
+        Application name is used as entry point 
+        during RTMP connect call.
+
         @rtype: C{str}
         """
-        return self.__class__.__name__
+        return config.get(self.__class__.__name__, 'name')
 
     def enabled(self):
         """
@@ -60,7 +63,7 @@ class Application(object):
         @rtype: C{bool}
         """
         try:
-            return config.getboolean(self.name(), 'enabled')
+            return config.getboolean(self.__class__.__name__, 'enabled')
         except ConfigParser.Error:
             return False
 

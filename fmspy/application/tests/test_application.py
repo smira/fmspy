@@ -23,19 +23,21 @@ class ApplicationTestCase(unittest.TestCase):
 
     def setUp(self):
         self.a = TestApplication()
+        config.add_section('TestApplication')
+        config.set('TestApplication', 'name', 'test')
+
+    def tearDown(self):
+        config.remove_option('TestApplication', 'name')
+        config.remove_option('TestApplication', 'enabled')
+        config.remove_section('TestApplication')
 
     def test_name(self):
-        self.failUnlessEqual('TestApplication', self.a.name())
+        self.failUnlessEqual('test', self.a.name())
 
     def test_enabled(self):
         self.failIf(self.a.enabled())
-        config.add_section('TestApplication')
         config.set('TestApplication', 'enabled', 'yes')
-        try:
-            self.failUnless(self.a.enabled())
-        finally:
-            config.remove_option('TestApplication', 'enabled')
-            config.remove_section('TestApplication')
+        self.failUnless(self.a.enabled())
 
     def test_repr(self):
         self.failUnlessEqual("<TestApplication>", repr(self.a))
