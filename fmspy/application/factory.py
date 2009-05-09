@@ -1,0 +1,62 @@
+# FMSPy - Copyright (c) 2009 Andrey Smirnov.
+#
+# See COPYRIGHT for details.
+
+"""
+Application factory.
+
+Loading application, dispatching control.
+"""
+
+from twisted.plugin import getPlugins
+from twisted.python import log
+from twisted.internet import defer
+
+from fmspy.application.interfaces import IApplication
+import fmspy.plugins
+
+class ApplicationNotFoundError(Exception):
+    """
+    Application not found in factory.
+    """
+
+class ApplicationFactory(object):
+    """
+    Application factory holds all loaded applications.
+
+    Factory can dispatch calls to applications.
+
+    @ivar apps: loaded applications
+    @type apps: C{dict}
+    """
+
+    @defer.inlineCallbacks
+    def load_applications(self):
+        """
+        Load all applications.
+
+        @return: Deferred, fired on application load complete
+        @rtype: C{Deferred}
+        """
+        for app in getPlugins(IApplication, fmspy.plugins):
+            if app.enabled():
+                log.msg("Loading %r..." % app)
+                yield app.load()
+                self.apps[app.name()] = app
+
+    def get_application(self, name):
+        """
+        Get application by name.
+
+        @param name: application name
+        @type name: C{str}
+        @return: application
+        @rtype: L{Application}
+        """
+        if name not in self.apps:
+            raise ApplicationNotFoundError, name
+
+        return self.apps[name]
+
+factory = ApplicationFactory()
+
