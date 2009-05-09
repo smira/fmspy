@@ -24,6 +24,9 @@ class ApplicationMock(object):
     def room_empty(self, room):
         self.empty_room = room
 
+    def __repr__(self):
+        return '<ApplicationMock>'
+
 class ClientMock(object):
     """
     Mock for room client (generally protocol).
@@ -60,3 +63,8 @@ class RoomTestCase(unittest.TestCase):
 
         self.r.leave(self.c2)
         self.failUnlessIdentical(self.r, self.a.empty_room)
+
+    def test_repr(self):
+        self.r.enter(self.c1)
+
+        self.failUnlessEqual("<Room '_' @ <ApplicationMock> (1)>", repr(self.r))
