@@ -55,9 +55,15 @@ class ApplicationFactory(object):
         for app in getPlugins(IApplication, self.plugin_module):
             if app.enabled():
                 log.msg("Loading %r..." % app)
-                yield app.load()
-                assert app.name() not in self.apps
+                try:
+                    yield app.load()
+                    assert app.name() not in self.apps
+                except:
+                    log.err(None, "Failed loading %r:" % app)
+                    continue
                 self.apps[app.name()] = app
+
+                log.msg("Loaded %r @ %r." % (app, app.name()))
 
     def get_application(self, name):
         """
