@@ -28,7 +28,21 @@ class ApplicationFactory(object):
 
     @ivar apps: loaded applications
     @type apps: C{dict}
+    @ivar plugin_module: root module for application plugins
+    @type plugin_module: C{module}
     """
+
+    def __init__(self, plugin_module=None):
+        """
+        Construct factory.
+
+        @param plugin_module: root module for application plugins, defaults to L{fmspy.plugins}.
+        @type plugin_module: C{module}
+        """
+        self.plugin_module = plugin_module
+        if self.plugin_module is None:
+            self.plugin_module = fmspy.plugins
+        self.apps = {}
 
     @defer.inlineCallbacks
     def load_applications(self):
@@ -38,7 +52,7 @@ class ApplicationFactory(object):
         @return: Deferred, fired on application load complete
         @rtype: C{Deferred}
         """
-        for app in getPlugins(IApplication, fmspy.plugins):
+        for app in getPlugins(IApplication, self.plugin_module):
             if app.enabled():
                 log.msg("Loading %r..." % app)
                 yield app.load()
