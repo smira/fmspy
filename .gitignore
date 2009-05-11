@@ -5,3 +5,5 @@ _trial_temp/
 docs/
 tags
 dropin.cache
+*.pro
+*.calltree
