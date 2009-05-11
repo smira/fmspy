@@ -13,12 +13,14 @@ from twisted.python import log
 from twisted.internet import defer
 
 from fmspy.application.interfaces import IApplication
+from fmspy.rtmp.constants import StatusCodes
 import fmspy.plugins
 
 class ApplicationNotFoundError(Exception):
     """
     Application not found in factory.
     """
+    code = StatusCodes.NC_CONNECT_INVALID_APPLICATION
 
 class ApplicationFactory(object):
     """
