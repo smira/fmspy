@@ -6,15 +6,24 @@
 Base RTMP protocol.
 """
 
-from twisted.internet import protocol, reactor, task
+import copy
+
+from twisted.internet import protocol, reactor, task, defer
 from twisted.python import log
 from pyamf.util import BufferedByteStream
 
 from fmspy.rtmp.assembly import RTMPAssembler, RTMPDisassembler
 from fmspy.rtmp import constants
-from fmspy.rtmp.packets import Ping, BytesRead
+from fmspy.rtmp.packets import Ping, BytesRead, Invoke
+from fmspy.rtmp.status import Status
 from fmspy.config import config
 from fmspy import _time
+
+class UnhandledInvokeError(Exception):
+    """
+    Unable to handle invoke (no such method).
+    """
+    code = constants.StatusCodes.NC_CALL_FAILED
 
 class RTMPBaseProtocol(protocol.Protocol):
     """
@@ -277,7 +286,49 @@ class RTMPCoreProtocol(RTMPBaseProtocol):
             return
 
         if noDataInterval > config.getint('RTMP', 'pingInterval'):
-            self.pushPacket(Ping(Ping.PING_CLIENT, [int((_time.seconds()*1000) & 0x7fffffff)]))
+            self.pushPacket(Ping(Ping.PING_CLIENT, [int(_time.seconds()*1000) & 0x7fffffff]))
 
         self.pushPacket(BytesRead(self.bytesReceived))
+
+    def _first_ping(self):
+        """
+        Send first ping, usually after first connect.
+        """
+        self.pushPacket(Ping(Ping.UNKNOWN_8, [0, 1, int(_time.seconds()*1000) & 0x7fffffff]))
+
+    def handleInvoke(self, packet):
+        """
+        Handle incoming L{Invoke} packets.
+
+        @param packet: packet
+        @type packet: L{Invoke}
+        """
+        handler = getattr(self, 'invoke_' + packet.name.lower(), None)
+        if handler is None:
+            handler = self.defaultInvokeHandler
+
+        def gotResult(result):
+            """
+            Got result from invoke.
+            """
+            self.pushPacket(Invoke(header=copy.copy(packet.header), id=packet.id, name="_result", argv=result))
+
+        def gotError(failure):
+            """
+            Invoke resulted in some error.
+            """
+            self.pushPacket(Invoke(header=copy.copy(packet.header), id=packet.id, name="_error", argv=[None, Status.from_failure(failure)]))
+
+        defer.maybeDeferred(handler, packet, *packet.argv).addCallbacks(gotResult, gotError)
+
+    def defaultInvokeHandler(self, packet,  *args):
+        """
+        Should be overridden.
+
+        Process packet when no default handler established.
+        """
+        log.msg("Unhandled invoke: %s(%r) [%d]" % (packet.name, args, packet.header.object_id))
+        raise UnhandledInvokeError(packet.name)
+
+
 
