@@ -75,3 +75,12 @@ class Room(object):
         """
         return self.clients.__iter__()
 
+    def empty(self):
+        """
+        Is this room empty?
+
+        @rtype: C{bool}
+        """
+        return False if self.clients else True
+
+
