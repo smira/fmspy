@@ -19,4 +19,7 @@ class EchoApplication(Application):
     """
     implements(IPlugin)
 
+    def invoke_echo(self, value):
+        return value
+
 app = EchoApplication()
