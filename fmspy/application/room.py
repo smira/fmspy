@@ -41,6 +41,12 @@ class Room(object):
         self.clients = set()
         self.application = None
 
+    def __eq__(self, other):
+        if not isinstance(other, Room):
+            return NotImplemented
+         
+        return self.application == other.application and self.name == other.name
+
     def __repr__(self):
         return "<Room %r @ %r (%d)>" % (self.name, self.application, len(self.clients))
 

@@ -69,6 +69,12 @@ class RoomTestCase(unittest.TestCase):
 
         self.failUnlessEqual("<Room '_' @ <ApplicationMock> (1)>", repr(self.r))
 
+    def test_eq(self):
+        self.failUnlessEqual(Room(self.a), Room(self.a))
+        self.failUnlessEqual(Room(self.a, 'room'), Room(self.a, 'room'))
+        self.failIfEqual(Room(self.a, 'room'), Room(self.a, 'kitchen'))
+        self.failIfEqual(Room(ApplicationMock(), 'room'), Room(self.a, 'room'))
+
     def test_empty(self):
         self.failUnless(self.r.empty())
 
