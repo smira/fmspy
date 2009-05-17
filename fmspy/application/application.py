@@ -9,6 +9,7 @@ Base application class.
 import ConfigParser
 
 from zope.interface import implements
+from twisted.internet import defer
 
 from fmspy.application.room import Room
 from fmspy.application.interfaces import IApplication
@@ -42,6 +43,7 @@ class Application(object):
         if room is self.hall:
             return
 
+        self.appDestroyRoom(room)
         del self.rooms[room.name]
         room.dismiss()
 
@@ -79,3 +81,157 @@ class Application(object):
 
     def __repr__(self):
         return "<%s>" % self.__class__.__name__
+
+    def connect(self, protocol, path):
+        """
+        Connect to application.
+
+        Some client requested connection to this app.
+        This method is called by L{RTMPServerProtocol}
+        when new connection to app is established.
+
+        @param protocol: client protocol
+        @type protocol: L{RTMPServerProtocol}
+        @param path: extra connect path
+        @type path: C{list}
+        @return: Deferred, connection status
+        @rtype: C{Deferred}
+        """
+        def checkRoom(_):
+            """
+            Find out room from connection path.
+
+            @return: Deferred or instant room for this connection
+            @rtype: L{Room}
+            """
+            if not path:
+                # Connect to root room, hall
+                return self.hall
+
+            # Room name is first param in path
+            room_name = path[0]
+            del path[0]
+
+            # Room is not created at the moment
+            if room_name not in self.rooms:
+                def createRoom(_):
+                    """
+                    Application allowed to create room.
+                    """
+                    self.rooms[room_name] = Room(self, room_name)
+                    return self.rooms[room_name]
+
+                return defer.maybeDeferred(self.appCreateRoom, protocol, room_name, path).addCallback(createRoom)
+
+            return self.rooms[room_name]
+
+        def enterRoom(room):
+            """
+            We should figure out whether it is 
+            allowed to join this room, and 
+            perform actual join.
+            """
+
+            def enterRoom(_):
+                room.enter(protocol)
+                protocol._room = room
+
+            def cleanupRoom(f):
+                if room.empty() and room is not self.hall:
+                    self.appDestroyRoom(room)
+                    del self.rooms[room.name]
+
+                return f
+
+            return defer.maybeDeferred(self.appEnterRoom, protocol, room, path).addCallbacks(enterRoom, cleanupRoom)
+
+        return defer.maybeDeferred(self.appConnect, protocol, path).addCallback(checkRoom).addCallback(enterRoom)
+
+    def disconnect(self, protocol):
+        """
+        Disconnect from application.
+
+        @param protocol: client protocol
+        @type protocol: L{RTMPServerProtocol}
+        """
+        self.appLeaveRoom(protocol, protocol._room)
+        protocol._room.leave(protocol)
+        del protocol._room
+
+    def appConnect(self, protocol, path):
+        """
+        Client is connecting to application.
+
+        Hook for custom application, may be deferred.
+
+        If application wants to refuse client from connecting,
+        it should raise some error.
+        
+        @param protocol: client protocol
+        @type protocol: L{RTMPServerProtocol}
+        @param path: extra connect path
+        @type path: C{list}
+        """
+
+    def appCreateRoom(self, protocol, room_name, path):
+        """
+        Room is about to be created for new client.
+
+        Hook for custom application, may be deferred.
+
+        If application wants to refuse client from creating this room,
+        it should raise some error. This method isn't called
+        for root room (L{hall}), root room is created implicitly
+        for every application.
+        
+        @param protocol: client protocol
+        @type protocol: L{RTMPServerProtocol}
+        @param room_name: room name
+        @type room_name: C{str}
+        @param path: extra connect path
+        @type path: C{list}
+        """
+    
+    def appEnterRoom(self, protocol, room, path):
+        """
+        Client is about to enter room.
+
+        Hook for custom application, may be deferred.
+
+        If application wants to refuse client from entering this room,
+        it should raise some error.
+        
+        @param protocol: client protocol
+        @type protocol: L{RTMPServerProtocol}
+        @param room: room 
+        @type room: L{Room}
+        @param path: extra connect path
+        @type path: C{list}
+        """
+
+    def appLeaveRoom(self, protocol, room):
+        """
+        Client is leaving room.
+
+        Hook for custom application, should return
+        immediately. No exceptions should be raised
+        in this method.
+
+        @param protocol: client protocol
+        @type protocol: L{RTMPServerProtocol}
+        @param room: room 
+        @type room: L{Room}
+        """
+    
+    def appDestroyRoom(self, room):
+        """
+        Room is about to be destroyed (it became empty).
+
+        Hook for custom application, should return
+        immediately. No exceptions should be raised
+        in this method.
+
+        @param room: room 
+        @type room: L{Room}
+        """
+
