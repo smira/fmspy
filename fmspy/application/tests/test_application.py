@@ -85,7 +85,7 @@ class ApplicationTestCase(unittest.TestCase):
             self.failUnlessEqual(['kitchen'], self.a.rooms.keys())
             self.failUnlessEqual([self.c1], list(self.a.rooms['kitchen']))
             self.failUnlessEqual([
-                    ('appConnect', self.c1, ['param']),
+                    ('appConnect', self.c1, ['kitchen', 'param']),
                     ('appCreateRoom', self.c1, 'kitchen', ['param']),
                     ('appEnterRoom', self.c1, self.a.rooms['kitchen'], ['param']),
                             ], self.a._callLog)
@@ -98,10 +98,10 @@ class ApplicationTestCase(unittest.TestCase):
             self.failUnlessEqual(['kitchen'], self.a.rooms.keys())
             self.failUnlessEqual(sorted([self.c1, self.c2]), sorted(list(self.a.rooms['kitchen'])))
             self.failUnlessEqual([
-                    ('appConnect', self.c1, []),
+                    ('appConnect', self.c1, ['kitchen']),
                     ('appCreateRoom', self.c1, 'kitchen', []),
                     ('appEnterRoom', self.c1, self.a.rooms['kitchen'], []),
-                    ('appConnect', self.c2, []),
+                    ('appConnect', self.c2, ['kitchen']),
                     ('appEnterRoom', self.c2, self.a.rooms['kitchen'], []),
                             ], self.a._callLog)
 
@@ -116,10 +116,10 @@ class ApplicationTestCase(unittest.TestCase):
             self.failUnlessEqual([self.c1], list(self.a.rooms['kitchen']))
             self.failUnlessEqual([self.c2], list(self.a.rooms['garage']))
             self.failUnlessEqual([
-                    ('appConnect', self.c1, []),
+                    ('appConnect', self.c1, ['kitchen']),
                     ('appCreateRoom', self.c1, 'kitchen', []),
                     ('appEnterRoom', self.c1, self.a.rooms['kitchen'], []),
-                    ('appConnect', self.c2, []),
+                    ('appConnect', self.c2, ['garage']),
                     ('appCreateRoom', self.c2, 'garage', []),
                     ('appEnterRoom', self.c2, self.a.rooms['garage'], []),
                             ], self.a._callLog)
@@ -147,7 +147,7 @@ class ApplicationTestCase(unittest.TestCase):
             self.failUnlessEqual({}, self.a.rooms)
             self.failUnlessEqual([], list(self.a.hall))
             self.failUnlessEqual([
-                    ('appConnect', self.c1, []),
+                    ('appConnect', self.c1, ['kitchen']),
                     ('appCreateRoom', self.c1, 'kitchen', []),
                     ('appEnterRoom', self.c1, Room(None, 'kitchen'), []),
                     ('appLeaveRoom', self.c1, Room(None, 'kitchen')),
@@ -194,7 +194,7 @@ class ApplicationTestCase(unittest.TestCase):
             self.failUnlessEqual([
                     ('appConnect', self.c2, []),
                     ('appEnterRoom', self.c2, self.a.hall, []),
-                    ('appConnect', self.c1, []),
+                    ('appConnect', self.c1, ['kitchen']),
                 ], self.a._callLog)
 
         return  self.a.connect(self.c2, []) \
@@ -211,7 +211,7 @@ class ApplicationTestCase(unittest.TestCase):
             self.failUnlessEqual({}, self.a.rooms)
             self.failUnlessEqual([], list(self.a.hall))
             self.failUnlessEqual([
-                    ('appConnect', self.c1, []),
+                    ('appConnect', self.c1, ['kitchen']),
                     ('appCreateRoom', self.c1, 'kitchen', []),
                     ('appDestroyRoom', Room(self.a, 'kitchen')),
                 ], self.a._callLog)

@@ -106,11 +106,10 @@ class Application(object):
             """
             if not path:
                 # Connect to root room, hall
-                return self.hall
+                return (self.hall, [])
 
             # Room name is first param in path
-            room_name = path[0]
-            del path[0]
+            room_name, pathextra = path[0], path[1:]
 
             # Room is not created at the moment
             if room_name not in self.rooms:
@@ -119,20 +118,21 @@ class Application(object):
                     Application allowed to create room.
                     """
                     self.rooms[room_name] = Room(self, room_name)
-                    return self.rooms[room_name]
+                    return (self.rooms[room_name], pathextra)
 
-                return defer.maybeDeferred(self.appCreateRoom, protocol, room_name, path).addCallback(createRoom)
+                return defer.maybeDeferred(self.appCreateRoom, protocol, room_name, pathextra).addCallback(createRoom)
 
-            return self.rooms[room_name]
+            return (self.rooms[room_name], pathextra)
 
-        def enterRoom(room):
+        def enterRoom(params):
             """
             We should figure out whether it is 
             allowed to join this room, and 
             perform actual join.
             """
+            (room, pathextra) = params
 
-            def enterRoom(_):
+            def realEnterRoom(_):
                 room.enter(protocol)
                 protocol._room = room
 
@@ -143,7 +143,7 @@ class Application(object):
 
                 return f
 
-            return defer.maybeDeferred(self.appEnterRoom, protocol, room, path).addCallbacks(enterRoom, cleanupRoom)
+            return defer.maybeDeferred(self.appEnterRoom, protocol, room, pathextra).addCallbacks(realEnterRoom, cleanupRoom)
 
         return defer.maybeDeferred(self.appConnect, protocol, path).addCallback(checkRoom).addCallback(enterRoom)
 
