@@ -14,7 +14,7 @@ unittest:
 # Build source-code docs using EpyDoc
 docs:
 	mkdir -p docs/api/
-	epydoc --output=docs/api/ -v --html --graph=all fmspy
+	epydoc --output=docs/api/ -v --html --graph=all --name=FMSPy fmspy
 
 # Source-code tags
 tags:
