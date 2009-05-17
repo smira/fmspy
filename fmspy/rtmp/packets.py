@@ -35,6 +35,9 @@ class Packet(object):
     def __eq__(self, other):
         return NotImplemented
 
+    def __ne__(self, other):
+        return NotImplemented
+
     @classmethod
     def read(self, header, buf):
         """
@@ -85,6 +88,9 @@ class DataPacket(Packet):
             return NotImplemented
 
         return self.data == other.data and self.header == other.header
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     @classmethod
     def read(self, header, buf):
@@ -155,6 +161,9 @@ class Invoke(Packet):
 
         return self.name == other.name and self.argv == other.argv and self.id == other.id and self.header == other.header
 
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     @classmethod
     def read(self, header, buf):
         """
@@ -221,6 +230,9 @@ class BytesRead(Packet):
             return NotImplemented
 
         return self.bytes == other.bytes and self.header == other.header
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     @classmethod
     def read(self, header, buf):
@@ -310,6 +322,9 @@ class Ping(Packet):
             return NotImplemented
 
         return self.event == other.event and self.data == other.data and self.header == other.header
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     @classmethod
     def read(self, header, buf):

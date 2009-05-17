@@ -100,6 +100,9 @@ class RTMPHeader(object):
             self.length == other.length and self.type == other.type and
             self.stream_id == other.stream_id)
 
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def fill(self, other):
         """
         Refill incomplete header with other header's data.
