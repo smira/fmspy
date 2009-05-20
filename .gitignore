@@ -7,3 +7,6 @@ tags
 dropin.cache
 *.pro
 *.calltree
+build/
+dist/
+fmspy.egg-info/
