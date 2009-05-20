@@ -1,0 +1,22 @@
+FMSPy
+=====
+
+FMSPy provides implementation of RTMP protocol upon Twisted Framework.
+On top of protocol implementation it builds server for Flash/Flex clients.
+
+At the moment FMSPy supports:
+- basic RPC support;
+- application plugin infrastructure (applications are designed as FMSPy plugins);
+- application API.
+
+Plans include:
+- live webcam audo/video streaming;
+- streaming from disk and writing streams to disk;
+- shared object support;
+- monitoring and load analysis;
+- clustering.
+
+Plugin applications may use full power of Twisted, for example: memcached protocol, database
+connections, RPC-over-HTTP, object persistence etc.
+
+More info at: http://fmspy.org/
