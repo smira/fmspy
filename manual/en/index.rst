@@ -1,19 +1,42 @@
-.. FMSPy documentation master file, created by sphinx-quickstart on Fri May 22 23:02:22 2009.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+.. FMSPy - Copyright (c) 2009 Andrey Smirnov.
+   See COPYRIGHT for details.
 
-Welcome to FMSPy's documentation!
-=================================
+============================================
+FMSPy - Flash Media Server written in Python
+============================================
 
-Contents:
+`FMSPy <http://fmspy.org/>`_ provides implementation of RTMP protocol upon `Twisted Framework <http://twistedmatrix.com/>`_.
+On top of protocol implementation it builds server for Flash/Flex/Haxe/... clients. 
+
+At the moment FMSPy supports:
+ - basic RPC support;
+ - application plugin infrastructure (applications are designed as FMSPy plugins);
+ - application API.
+
+`Plans <http://fmspy.org/roadmap/>`_ include:
+ - live webcam audo/video streaming;
+ - streaming from disk and writing streams to disk;
+ - shared object support;
+ - monitoring and load analysis;
+ - clustering.
+
+Plugin applications may use full power of Twisted, for example: memcached protocol, database
+connections, RPC-over-HTTP, object persistence etc.
+
+--------
+Contents
+--------
 
 .. toctree::
    :maxdepth: 2
 
+   userguide
+   developer
+
+------------------
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`
 
