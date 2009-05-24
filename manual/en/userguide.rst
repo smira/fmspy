@@ -46,8 +46,16 @@ FMSPy Application Server
  * iteration over clients of one room;
  * invoke handling at application level (RPC).
 
+.. _installation:
+
 Installation
 ============
+
+Requirements
+------------
+  
+ * Python 2.5+ (maybe could work with tweaks under 2.4)
+ * UNIX (Linux, BSD) operating system, could work under Windows, not tested
 
 Using easy_install
 ------------------
@@ -56,10 +64,45 @@ FMSPy is easy installable::
 
     easy_install fmspy
 
-
+Easy_install should automatically install all required dependencies, usually
+setuptools (easy_install) come preinstalled in all major Linux distros.
 
 From source code
 ----------------
+
+Perform source code checkout::
+  
+    git clone http://fmspy.org/git/ fmspy
+
+From this checkout run::
+
+    python setup.py build
+    python setup.py install
+
+Requirements:
+    
+    * Twisted 8.1.0+ (http://twistedmatrix.com/)
+    * PyAMF 0.4+ (http://pyamf.org/)
+
+.. _running:
+
+Running
+=======
+
+FMSPy is a ``twistd`` plugin, so startup is flexible and easy. For non-daemon mode (debug, console)::
+
+    twistd -n fmspy
+
+Use ``Ctrl+C`` to stop server.
+
+If you want to daemonize FMSPy, perform log rotation, pidfile handling, etc. please refer to 
+`twistd documentation <http://twistedmatrix.com/projects/core/documentation/man/twistd-man.html>`_.
+
+Examples
+========
+
+Some examples are bundled with FMSPy distribution. After starting FMSPy server, point your browser
+to http://localhost:3000/examples/. (Default port for web is 3000).
 
 .. _license:
 .. index:: license
