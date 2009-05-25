@@ -137,7 +137,7 @@ class RTMPServerProtocol(RTMPCoreProtocol):
         def gotResult(result):
             return [None, result]
 
-        return defer.maybeDeferred(handler, *args[1:]).addCallback(gotResult)
+        return defer.maybeDeferred(handler, self, *args[1:]).addCallback(gotResult)
 
 class RTMPServerFactory(protocol.ServerFactory):
     """

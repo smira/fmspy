@@ -20,7 +20,7 @@ class EchoApplication(Application):
     """
     implements(IPlugin)
 
-    def invoke_echo(self, value):
+    def invoke_echo(self, protocol, value):
         """
         Handler for C{echo(value)}.
 
