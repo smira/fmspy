@@ -15,6 +15,7 @@ from pyamf.util import BufferedByteStream
 from fmspy.rtmp.assembly import RTMPAssembler, RTMPDisassembler
 from fmspy.rtmp import constants
 from fmspy.rtmp.packets import Ping, BytesRead, Invoke
+from fmspy.rtmp.header import RTMPHeader
 from fmspy.rtmp.status import Status
 from fmspy.config import config
 from fmspy import _time
@@ -194,6 +195,10 @@ class RTMPCoreProtocol(RTMPBaseProtocol):
     @type bytesReceived: C{int}
     @ivar pingTask: periodic ping task
     @type pingTask: C{task.LoopingCall}
+    @ivar nextInvokeId: next Invoke id to use in this connection
+    @type nextInvokeId: C{float}
+    @ivar invokeReplies: collection of C{Deferred}s for each L{Invoke} id we sent
+    @type invokeReplies: C{dict}
     """
 
     def __init__(self):
@@ -204,6 +209,8 @@ class RTMPCoreProtocol(RTMPBaseProtocol):
         self.bytesReceived = 0
         self.lastReceived = _time.seconds()
         self.pingTask = None
+        self.nextInvokeId = 2.0
+        self.invokeReplies = {}
 
     def dataReceived(self, data):
         """
@@ -222,6 +229,8 @@ class RTMPCoreProtocol(RTMPBaseProtocol):
         Connection with peer was lost for some reason.
         """
         RTMPBaseProtocol.connectionLost(self, reason)
+
+        self.invokeReplies = {}
 
         if self.pingTask is not None:
             self.pingTask.stop()
@@ -303,6 +312,20 @@ class RTMPCoreProtocol(RTMPBaseProtocol):
         @param packet: packet
         @type packet: L{Invoke}
         """
+        if packet.name in ["_result", "_error"]:
+            # we got result for some our invoke
+            if packet.id not in self.invokeReplies:
+                log.msg("Got reply %r for unsent (?) Invoke" % packet)
+            else:
+                d = self.invokeReplies.pop(packet.id)
+
+                if packet.name == "_result":
+                    d.callback(packet.argv)
+                else:
+                    d.errback(Status(**packet.argv[1]))
+
+            return 
+
         handler = getattr(self, 'invoke_' + packet.name.lower(), None)
         if handler is None:
             handler = self.defaultInvokeHandler
@@ -317,9 +340,26 @@ class RTMPCoreProtocol(RTMPBaseProtocol):
             """
             Invoke resulted in some error.
             """
+            log.err(failure, "Error while handling invoke")
             self.pushPacket(Invoke(header=copy.copy(packet.header), id=packet.id, name="_error", argv=[None, Status.from_failure(failure)]))
 
         defer.maybeDeferred(handler, packet, *packet.argv).addCallbacks(gotResult, gotError)
+
+    def invoke(self, name, *args):
+        """
+        Perform invoke on other side of connection.
+
+        @param name: method being invoked
+        @type name: C{str}
+        @param args: arguments for the call
+        @type args: C{list}
+        """
+        packet = Invoke(name, (None, ) + args, self.nextInvokeId, RTMPHeader(timestamp=0, stream_id=0))
+        d = self.invokeReplies[self.nextInvokeId] = defer.Deferred()
+        self.nextInvokeId += 1
+        self.pushPacket(packet)
+
+        return d
 
     def defaultInvokeHandler(self, packet,  *args):
         """
