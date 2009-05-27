@@ -74,7 +74,7 @@ class FMSPyServiceMaker(object):
                     from pkg_resources import Requirement, resource_filename, DistributionNotFound
 
                     try:
-                        examples_path = resource_filename(Requirement.parse("fmspy"), "examples")
+                        examples_path = resource_filename(Requirement.parse("fmspy"), "share/examples")
                     except DistributionNotFound:
                         pass
 
