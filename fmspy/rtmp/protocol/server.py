@@ -14,6 +14,18 @@ from fmspy.rtmp import constants
 from fmspy.rtmp.status import Status
 from fmspy.application import app_factory
 
+class AppStorage(object):
+    """
+    Class represents are for application to store
+    data, associated with client.
+
+    Each L{RTMPServerProtocol} holds instance of L{AppStorage} in
+    property C{_app}.
+
+    @ivar room: application room
+    @type room: L{Room}
+    """
+
 class RTMPServerProtocol(RTMPCoreProtocol):
     """
     RTMP server-side protocol implementation.
@@ -29,6 +41,7 @@ class RTMPServerProtocol(RTMPCoreProtocol):
         RTMPCoreProtocol.__init__(self)
         
         self.application = None
+        self._app = AppStorage()
 
     def connectionLost(self, reason):
         """
@@ -37,6 +50,7 @@ class RTMPServerProtocol(RTMPCoreProtocol):
         if self.application is not None:
             self.application.disconnect(self)
             self.application = None
+            self._app = None
 
         RTMPCoreProtocol.connectionLost(self, reason)
 
@@ -123,7 +137,7 @@ class RTMPServerProtocol(RTMPCoreProtocol):
         def gotResult(result):
             return [None, result]
 
-        return defer.maybeDeferred(handler, *args[1:]).addCallback(gotResult)
+        return defer.maybeDeferred(handler, self, *args[1:]).addCallback(gotResult)
 
 class RTMPServerFactory(protocol.ServerFactory):
     """
