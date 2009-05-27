@@ -16,7 +16,8 @@ setup(name='fmspy',
       install_requires=['Twisted>=8.1.0', 'pyAMF>=0.4'],
       zip_safe=False,
       license='MIT',
-      data_files=[('etc', ['fmspy.cfg']), ('examples/echotest', ['examples/echotest/index.html', 'examples/echotest/echo_test.swf'])],
+      data_files=[('etc', ['fmspy.cfg']), ('examples/echotest', ['examples/echotest/index.html', 'examples/echotest/echo_test.swf']),
+          ('examples/chat', ['examples/chat/index.html', 'examples/chat/chat.swf'])],
       include_package_data=True,
       long_description="""FMSPy provides implementation of RTMP protocol upon Twisted Framework.
 On top of protocol implementation it builds server for Flash/Flex clients. 
