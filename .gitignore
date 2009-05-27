@@ -10,3 +10,5 @@ dropin.cache
 build/
 dist/
 fmspy.egg-info/
+twistd.pid
+twistd.log
