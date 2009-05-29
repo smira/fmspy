@@ -12,6 +12,7 @@ import decimal, sets
 from twisted.trial import unittest
 
 from fmspy.application.room import Room
+from fmspy.rtmp.protocol.server import AppStorage
 
 class ApplicationMock(object):
     """
@@ -31,6 +32,9 @@ class ClientMock(object):
     """
     Mock for room client (generally protocol).
     """
+
+    def __init__(self):
+        self._app = AppStorage()
 
 class RoomTestCase(unittest.TestCase):
     """

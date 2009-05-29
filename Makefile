@@ -18,6 +18,6 @@ docs:
 
 # Source-code tags
 tags:
-	ctags -R --exclude=docs
+	ctags -R --exclude=docs --exclude=build
 
 .PHONY: docs unittest tags

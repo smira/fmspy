@@ -134,7 +134,7 @@ class Application(object):
 
             def realEnterRoom(_):
                 room.enter(protocol)
-                protocol._room = room
+                protocol._app.room = room
 
             def cleanupRoom(f):
                 if room.empty() and room is not self.hall:
@@ -154,9 +154,9 @@ class Application(object):
         @param protocol: client protocol
         @type protocol: L{RTMPServerProtocol}
         """
-        self.appLeaveRoom(protocol, protocol._room)
-        protocol._room.leave(protocol)
-        del protocol._room
+        self.appLeaveRoom(protocol, protocol._app.room)
+        protocol._app.room.leave(protocol)
+        del protocol._app.room
 
     def appConnect(self, protocol, path):
         """

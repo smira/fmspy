@@ -71,7 +71,7 @@ class ApplicationTestCase(unittest.TestCase):
         def checkIt(_):
             self.failUnlessEqual({}, self.a.rooms)
             self.failUnlessEqual([self.c1], list(self.a.hall))
-            self.failUnlessIdentical(self.a.hall, self.c1._room)
+            self.failUnlessIdentical(self.a.hall, self.c1._app.room)
             self.failUnlessEqual([
                     ('appConnect', self.c1, []),
                     ('appEnterRoom', self.c1, self.a.hall, []),

@@ -21,7 +21,7 @@ class Status(object):
     @type description: C{str}
     """
 
-    def __init__(self, code="NetConnection.Error", level="error", description=""):
+    def __init__(self, code="NetConnection.Error", level="error", description="", **kwargs):
         """
         Constructor.
 
@@ -35,6 +35,7 @@ class Status(object):
         self.code = code
         self.level = level
         self.description = description
+        self.__dict__.update(kwargs)
 
     def __repr__(self):
         return "Status(code=%r, level=%r, description=%r)" % (self.code, self.level, self.description)
