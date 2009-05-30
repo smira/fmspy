@@ -15,7 +15,7 @@ try:
     from pkg_resources import Requirement, resource_filename, DistributionNotFound
 
     try:
-        config_files.append(resource_filename(Requirement.parse("spamfighter"), "etc/fmspy.cfg"))
+        config_files.append(resource_filename(Requirement.parse("fmspy"), "etc/fmspy.cfg"))
     except DistributionNotFound:
         pass
 
