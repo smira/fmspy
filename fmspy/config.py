@@ -9,7 +9,7 @@ Configuration file handling.
 import ConfigParser
 
 config = ConfigParser.SafeConfigParser()
-config_files = ['/etc/fmspy.cfg', '/ust/local/etc/fmspy.cfg', 'fmspy.cfg']
+config_files = []
 
 try:
     from pkg_resources import Requirement, resource_filename, DistributionNotFound
@@ -21,6 +21,8 @@ try:
 
 except ImportError:
     pass 
+
+config_files.extend(['/etc/fmspy.cfg', '/ust/local/etc/fmspy.cfg', 'fmspy.cfg'])
 
 config.read(config_files)
 
