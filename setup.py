@@ -7,7 +7,7 @@
 from setuptools import setup
 
 setup(name='fmspy',
-      version='0.0.1',
+      version='0.1.0',
       description='Flash Media Server in Python using Twisted Framework',
       author='Andrey Smirnov',
       author_email='me@smira.ru',
