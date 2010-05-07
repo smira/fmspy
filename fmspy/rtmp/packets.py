@@ -174,7 +174,7 @@ class Invoke(Packet):
         @param buf: buffer holding packet data
         @type buf: C{BufferedByteStream}
         """
-        amf = pyamf.decode(buf)
+        amf = pyamf.decode(buf, encoding=pyamf.AMF0)
         name = amf.next()
         id = amf.next()
         argv = tuple(amf)
@@ -187,7 +187,7 @@ class Invoke(Packet):
         @return: representation of packet
         @rtype: C{str}
         """
-        buf = pyamf.encode(self.name, self.id, *self.argv)
+        buf = pyamf.encode(self.name, self.id, *self.argv, encoding=pyamf.AMF0)
         self.header.length = len(buf)
         return buf.read()
 
