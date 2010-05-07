@@ -22,7 +22,7 @@ try:
 except ImportError:
     pass 
 
-config_files.extend(['/etc/fmspy.cfg', '/ust/local/etc/fmspy.cfg', 'fmspy.cfg'])
+config_files.extend(['/etc/fmspy.cfg', '/usr/local/etc/fmspy.cfg', 'fmspy.cfg'])
 
 config.read(config_files)
 
