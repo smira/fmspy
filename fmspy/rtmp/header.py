@@ -82,11 +82,7 @@ class RTMPHeader(object):
         @param stream_id: Stream ID
         @type stream_id: C{int}
         """
-        self.object_id = object_id
-        self.timestamp = timestamp
-        self.length = length
-        self.type = type
-        self.stream_id = stream_id
+        self.object_id, self.timestamp, self.length, self.type, self.stream_id = object_id, timestamp, length, type, stream_id
 
     def __repr__(self):
         return "<RTMPHeader(object_id=%r, timestamp=%r, length=%r, type=0x%02x, stream_id=%r)>" % (self.object_id,
