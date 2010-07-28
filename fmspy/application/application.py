@@ -82,7 +82,7 @@ class Application(object):
     def __repr__(self):
         return "<%s>" % self.__class__.__name__
 
-    def connect(self, protocol, path):
+    def connect(self, protocol, path, *args):
         """
         Connect to application.
 
@@ -145,7 +145,7 @@ class Application(object):
 
             return defer.maybeDeferred(self.appEnterRoom, protocol, room, pathextra).addCallbacks(realEnterRoom, cleanupRoom)
 
-        return defer.maybeDeferred(self.appConnect, protocol, path).addCallback(checkRoom).addCallback(enterRoom)
+        return defer.maybeDeferred(self.appConnect, protocol, path, *args).addCallback(checkRoom).addCallback(enterRoom)
 
     def disconnect(self, protocol):
         """
@@ -158,7 +158,7 @@ class Application(object):
         protocol._app.room.leave(protocol)
         del protocol._app.room
 
-    def appConnect(self, protocol, path):
+    def appConnect(self, protocol, path, *args):
         """
         Client is connecting to application.
 

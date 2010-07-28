@@ -96,7 +96,7 @@ class RTMPServerProtocol(RTMPCoreProtocol):
 
         self._handshakeComplete()
 
-    def invoke_connect(self, packet, connect_params):
+    def invoke_connect(self, packet, connect_params, *args):
         """
         Connection to server application.
 
@@ -121,7 +121,7 @@ class RTMPServerProtocol(RTMPCoreProtocol):
             """
             return [None, Status(constants.StatusCodes.NC_CONNECT_SUCCESS, "success", "Connect OK")]
 
-        return self.application.connect(self, connect_path).addCallback(connectOk)
+        return self.application.connect(self, connect_path, *args).addCallback(connectOk)
 
     def defaultInvokeHandler(self, packet,  *args):
         """
